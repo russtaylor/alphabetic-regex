@@ -6,6 +6,7 @@
 #
 class AlphabeticRegex
 
+  SPECIAL_CHARACTERS = '_- '
   INVALID_CHARACTERS=':;<=>?@[\]^`'
 
   def get_range_before(character)
@@ -32,12 +33,24 @@ class AlphabeticRegex
     '0'
   end
 
+  def is_alphabetic(character)
+    /[[:alpha:]]/.match?(character)
+  end
+
+  def is_digit(character)
+    /[[:digit:]]/.match?(character)
+  end
+
+  def is_special_character(character)
+    SPECIAL_CHARACTERS.include?(character)
+  end
+
   def is_uppercase(character)
-    character == character.upcase
+    /[[:upper:]]/.match?(character)
   end
 
   def is_lowercase(character)
-    character == character.downcase
+    /[[:lower:]]/.match?(character)
   end
 
   def is_invalid_charater(character)
