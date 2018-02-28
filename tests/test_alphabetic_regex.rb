@@ -7,12 +7,6 @@ class TestAlphabeticRegex < Test::Unit::TestCase
 
   end
 
-  def test_get_full_alpha_range
-    alphareg = AlphabeticRegex.new
-
-    assert_equal('A-Za-z', alphareg.get_full_alpha_range)
-  end
-
   def test_get_upcase
     alphareg = AlphabeticRegex.new
 
@@ -23,12 +17,111 @@ class TestAlphabeticRegex < Test::Unit::TestCase
     assert_equal([false, ' '], alphareg.get_upcase(' '))
   end
 
+  def test_escape_necessary
+    alphareg = AlphabeticRegex.new
+
+    assert_equal(' \\-', alphareg.escape_necessary(' -'))
+    assert_equal('abcdefg\\-\\-\\-hijklmn', alphareg.escape_necessary('abcdefg---hijklmn'))
+    assert_equal('_\\-_\\-_\\-_\\-_', alphareg.escape_necessary('_-_-_-_-_'))
+  end
+
+  def test_get_string_to_match
+    alphareg = AlphabeticRegex.new
+
+    assert_equal('', alphareg.get_string_to_match('Sherlockholmes', 'S'))
+    assert_equal('--', alphareg.get_string_to_match('--p-!', 'p'))
+    assert_equal('In the ', alphareg.get_string_to_match('In the year 1878 I took my degree', 'y'))
+  end
+
+  def test_get_string_after_match
+    alphareg = AlphabeticRegex.new
+
+    assert_equal('', alphareg.get_string_after_match('Sherlockholmes', 's'))
+    assert_equal('-!', alphareg.get_string_after_match('--p-!', 'p'))
+    assert_equal('ree', alphareg.get_string_after_match('In the year 1878 I took my degree', 'g'))
+  end
+
+  def test_range_before
+    alphareg = AlphabeticRegex.new
+
+    assert_equal('[ \-\.0-9]', alphareg.get_range_before('A'))
+    assert_equal('[ \-\.0-9]', alphareg.get_range_before('a'))
+    assert_equal('[ \-\.]', alphareg.get_range_before('0'))
+    assert_equal('[ \-\.0]', alphareg.get_range_before('1'))
+    assert_equal('[ \-\.0-8]', alphareg.get_range_before('9'))
+    assert_equal('[ \-\.0-9Aa]', alphareg.get_range_before('B'))
+    assert_equal('[ \-\.0-9A-Ya-y]', alphareg.get_range_before('Z'))
+    assert_equal('[ \-\.0-9A-Za-z]', alphareg.get_range_before('_'))
+  end
+
+  def test_range_after
+    alphareg = AlphabeticRegex.new
+
+    assert_equal('[_0-9A-Za-z]', alphareg.get_range_after('.'))
+    assert_equal('[\-\._0-9A-Za-z]', alphareg.get_range_after(' '))
+    assert_equal('[_1-9A-Za-z]', alphareg.get_range_after('0'))
+    assert_equal('[_9A-Za-z]', alphareg.get_range_after('8'))
+    assert_equal('[_B-Zb-z]', alphareg.get_range_after('A'))
+    assert_equal('[_]', alphareg.get_range_after('Z'))
+    assert_equal('[]', alphareg.get_range_after('_'))
+  end
+
+  def test_get_special_before
+    alphareg = AlphabeticRegex.new
+
+    assert_equal('', alphareg.get_special_before(' '))
+    assert_equal(' ', alphareg.get_special_before('-'))
+    assert_equal(' \\-\\.', alphareg.get_special_before('0'))
+    assert_equal(' \\-\\.', alphareg.get_special_before('b'))
+    assert_equal(' \\-\\.', alphareg.get_special_before('_'))
+  end
+
+  def test_get_special_after
+    alphareg = AlphabeticRegex.new
+
+    assert_equal('\\-\\._', alphareg.get_special_after(' '))
+    assert_equal('\\._', alphareg.get_special_after('-'))
+    assert_equal('_', alphareg.get_special_after('0'))
+    assert_equal('_', alphareg.get_special_after('b'))
+    assert_equal('', alphareg.get_special_after('_'))
+  end
+
+  def test_get_full_alpha_range
+    alphareg = AlphabeticRegex.new
+
+    assert_equal('A-Za-z', alphareg.get_full_alpha_range)
+  end
+
+  def test_get_numeric_range_before
+    alphareg = AlphabeticRegex.new
+
+    assert_equal('0-9', alphareg.get_numeric_range_before('_'))
+    assert_equal('0-9', alphareg.get_numeric_range_before('a'))
+    assert_equal('', alphareg.get_numeric_range_before('-'))
+    assert_equal('', alphareg.get_numeric_range_before(' '))
+    assert_equal('', alphareg.get_numeric_range_before('0'))
+    assert_equal('0-8', alphareg.get_numeric_range_before('9'))
+    assert_equal('0', alphareg.get_numeric_range_before('1'))
+  end
+
+  def test_get_numeric_range_after
+    alphareg = AlphabeticRegex.new
+
+    assert_equal('0-9', alphareg.get_numeric_range_after('-'))
+    assert_equal('', alphareg.get_numeric_range_after('_'))
+    assert_equal('', alphareg.get_numeric_range_after('9'))
+    assert_equal('1-9', alphareg.get_numeric_range_after('0'))
+    assert_equal('9', alphareg.get_numeric_range_after('8'))
+  end
+
   def test_get_alpha_range_before
     alphareg = AlphabeticRegex.new
 
     assert_equal('A-Za-z', alphareg.get_alpha_range_before('_'))
     assert_equal('', alphareg.get_alpha_range_before('-'))
     assert_equal('', alphareg.get_alpha_range_before(' '))
+    assert_equal('', alphareg.get_alpha_range_before('0'))
+    assert_equal('', alphareg.get_alpha_range_before('9'))
     assert_equal('', alphareg.get_alpha_range_before('A'))
     assert_equal('', alphareg.get_alpha_range_before('a'))
     assert_equal('A-Ya-y', alphareg.get_alpha_range_before('Z'))
@@ -41,6 +134,8 @@ class TestAlphabeticRegex < Test::Unit::TestCase
 
     assert_equal('A-Za-z', alphareg.get_alpha_range_after('-'))
     assert_equal('A-Za-z', alphareg.get_alpha_range_after(' '))
+    assert_equal('A-Za-z', alphareg.get_alpha_range_after('9'))
+    assert_equal('A-Za-z', alphareg.get_alpha_range_after('0'))
     assert_equal('', alphareg.get_alpha_range_after('_'))
     assert_equal('', alphareg.get_alpha_range_after('Z'))
     assert_equal('', alphareg.get_alpha_range_after('z'))

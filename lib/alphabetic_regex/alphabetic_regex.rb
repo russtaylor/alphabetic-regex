@@ -6,15 +6,18 @@
 #
 class AlphabeticRegex
 
-  # Since we are (for now) dealing with filenames, we're disallowing most special characters.
-  SPECIAL_CHARACTERS = ' -_'
-  SPECIAL_BEFORE_ALPHANUMERIC = ' -'
+  SPECIAL_CHARACTERS = ' -._'
+  SPECIAL_BEFORE_ALPHANUMERIC = ' -.'
+  NEEDS_ESCAPE = '-.'
   SPECIAL_AFTER_ALPHANUMERIC = '_'
+  # Since we are (for now) dealing with filenames, we're disallowing most special characters.
   INVALID_CHARACTERS = ':;<=>?@[]\\^`/!"\'$#^%&()*+,|'
   FIRST_CHARACTER = ' '
   LAST_CHARACTER = '_'
   FIRST_ALPHA_CHARACTER = 'A'
   LAST_ALPHA_CHARACTER = 'Z'
+  FIRST_NUMERIC_CHARACTER = '0'
+  LAST_NUMERIC_CHARACTER = '9'
 
   def original_case(upcase, character)
     upcase ? character : character.downcase
@@ -26,12 +29,64 @@ class AlphabeticRegex
     return upcase, upcase_char.force_encoding('ASCII')
   end
 
-  def get_range_before(character)
+  def needs_escape(character)
+    NEEDS_ESCAPE.include?(character)
+  end
 
+  def escape_necessary(input)
+    escaped = Array.new
+    input.each_char do |character|
+      if (needs_escape(character))
+        escaped.push('\\')
+      end
+      escaped.push(character)
+    end
+    escaped.join('')
+  end
+
+  def get_string_to_match(input_string, character)
+    escaped_char = escape_necessary(character)
+    input_string.partition(/#{escaped_char}/).first
+  end
+
+  def get_string_after_match(input_string, character)
+    escaped_char = escape_necessary(character)
+    input_string.partition(/#{escaped_char}/).last
+  end
+
+  def get_range_before(character)
+    special_range = get_special_before(character)
+    numeric_range = get_numeric_range_before(character)
+    alphabetic_range = get_alpha_range_before(character)
+    "[#{special_range}#{numeric_range}#{alphabetic_range}]"
   end
 
   def get_range_after(character)
+    special_range = get_special_after(character)
+    numeric_range = get_numeric_range_after(character)
+    alphabetic_range = get_alpha_range_after(character)
+    "[#{special_range}#{numeric_range}#{alphabetic_range}]"
+  end
 
+  def get_special_before(character)
+    unless (SPECIAL_BEFORE_ALPHANUMERIC.include?(character))
+      return escape_necessary(SPECIAL_BEFORE_ALPHANUMERIC)
+    end
+    match_before = get_string_to_match(SPECIAL_BEFORE_ALPHANUMERIC, character)
+    escape_necessary(match_before)
+  end
+
+  def get_special_after(character)
+    unless (SPECIAL_AFTER_ALPHANUMERIC.include?(character) ||
+          SPECIAL_BEFORE_ALPHANUMERIC.include?(character))
+      return escape_necessary(SPECIAL_AFTER_ALPHANUMERIC)
+    end
+    if (SPECIAL_BEFORE_ALPHANUMERIC.include?(character))
+      after_match = get_string_after_match(SPECIAL_BEFORE_ALPHANUMERIC, character)
+      return escape_necessary(after_match + SPECIAL_AFTER_ALPHANUMERIC)
+    end
+    after_match = get_string_after_match(SPECIAL_AFTER_ALPHANUMERIC, character)
+    escape_necessary(after_match)
   end
 
   def get_full_numeric_range
@@ -43,11 +98,33 @@ class AlphabeticRegex
   end
 
   def get_numeric_range_before(character)
-
+    if (SPECIAL_AFTER_ALPHANUMERIC.include?(character) || is_alphabetic(character))
+      return get_full_numeric_range
+    end
+    if (FIRST_NUMERIC_CHARACTER == character || SPECIAL_BEFORE_ALPHANUMERIC.include?(character))
+      return ''
+    end
+    stop_digit = (character.to_i - 1).to_s
+    if (stop_digit == FIRST_NUMERIC_CHARACTER)
+      return '0'
+    end
+    "#{FIRST_NUMERIC_CHARACTER}-#{stop_digit}"
   end
 
   def get_numeric_range_after(character)
-
+    if (SPECIAL_BEFORE_ALPHANUMERIC.include?(character))
+      return get_full_numeric_range
+    end
+    if (LAST_NUMERIC_CHARACTER == character ||
+        SPECIAL_AFTER_ALPHANUMERIC.include?(character) ||
+        is_alphabetic(character))
+      return ''
+    end
+    stop_digit = (character.to_i + 1).to_s
+    if (stop_digit == LAST_NUMERIC_CHARACTER)
+      return '9'
+    end
+    "#{stop_digit}-#{LAST_NUMERIC_CHARACTER}"
   end
 
   def get_alpha_range_before(character)
@@ -58,7 +135,9 @@ class AlphabeticRegex
     if (get_prev_character(upcase_char) == FIRST_ALPHA_CHARACTER)
       return "#{FIRST_ALPHA_CHARACTER}#{FIRST_ALPHA_CHARACTER.downcase}"
     end
-    if (upcase_char == FIRST_ALPHA_CHARACTER || SPECIAL_BEFORE_ALPHANUMERIC.include?(character))
+    if (upcase_char == FIRST_ALPHA_CHARACTER ||
+        is_digit(upcase_char) ||
+        SPECIAL_BEFORE_ALPHANUMERIC.include?(character))
       return ''
     end
     stop_character = get_prev_character(character)
@@ -66,14 +145,15 @@ class AlphabeticRegex
   end
 
   def get_alpha_range_after(character)
-    if (SPECIAL_BEFORE_ALPHANUMERIC.include?(character))
+    if (SPECIAL_BEFORE_ALPHANUMERIC.include?(character) || is_digit(character))
       return get_full_alpha_range
     end
     upcase, upcase_char = get_upcase(character)
     if (get_next_character(upcase_char) == LAST_ALPHA_CHARACTER)
       return "#{LAST_ALPHA_CHARACTER}#{LAST_ALPHA_CHARACTER.downcase}"
     end
-    if (upcase_char == LAST_ALPHA_CHARACTER || SPECIAL_AFTER_ALPHANUMERIC.include?(character))
+    if (upcase_char == LAST_ALPHA_CHARACTER ||
+        SPECIAL_AFTER_ALPHANUMERIC.include?(character))
       return ''
     end
     start_character = get_next_character(character)
