@@ -4,7 +4,7 @@ require 'alphabetic_regex/alphabetic_regex.rb'
 class TestAlphabeticRegex < Test::Unit::TestCase
 
   def regex_test(regex_expression, string, should_match)
-
+    assert_equal(should_match, /#{regex_expression}/.match?(string))
   end
 
   def test_get_upcase
@@ -15,6 +15,17 @@ class TestAlphabeticRegex < Test::Unit::TestCase
     assert_equal([false, 'Z'], alphareg.get_upcase('z'))
     assert_equal([false, '!'], alphareg.get_upcase('!'))
     assert_equal([false, ' '], alphareg.get_upcase(' '))
+  end
+
+  def test_get_regex_character_match
+    alphareg = AlphabeticRegex.new
+
+    assert_equal('Aa', alphareg.get_regex_character_match('A'))
+    assert_equal('Aa', alphareg.get_regex_character_match('a'))
+    assert_equal('Zz', alphareg.get_regex_character_match('Z'))
+    assert_equal('Zz', alphareg.get_regex_character_match('z'))
+    assert_equal('_', alphareg.get_regex_character_match('_'))
+    assert_equal('0', alphareg.get_regex_character_match('0'))
   end
 
   def test_escape_necessary
@@ -41,6 +52,40 @@ class TestAlphabeticRegex < Test::Unit::TestCase
     assert_equal('ree', alphareg.get_string_after_match('In the year 1878 I took my degree', 'g'))
   end
 
+  def test_generate_regex
+    alphareg = AlphabeticRegex.new
+
+    puts alphareg.generate_regex('Apple', 'Banana')
+    regex_test(alphareg.generate_regex('Hello', 'Sherlock'), 'Hi', true)
+    regex_test(alphareg.generate_regex('A', 'Azure'), 'Art', true)
+    regex_test(alphareg.generate_regex('A', 'Azure'), 'Bravo', false)
+    regex_test(alphareg.generate_regex('Hello', 'Sherlock'), 'Zebra', false)
+  end
+
+  def test_generate_regex_before
+    alphareg = AlphabeticRegex.new
+
+    assert_equal('[Hh]([ \-\.0-9A-Ha-h]|$)', alphareg.generate_regex_before('Hi'))
+    regex_test('^' + alphareg.generate_regex_before('Hi'), 'Hi', false)
+    regex_test('^' + alphareg.generate_regex_before('Hi'), 'Highlight', false)
+    regex_test('^' + alphareg.generate_regex_before('Hi'), 'H', true)
+  end
+
+  def test_generate_regex_after
+    alphareg = AlphabeticRegex.new
+
+    assert_equal('[Hh]([[_J-Zj-z]]|[Ii])', alphareg.generate_regex_after('Hi'))
+    regex_test(alphareg.generate_regex_after('Hi'), 'Hi', true)
+    regex_test(alphareg.generate_regex_after('Hi'), 'Highlight', true)
+    regex_test(alphareg.generate_regex_after('Hi'), 'H', false)
+  end
+
+  def test_generate_regex_between()
+    alphareg = AlphabeticRegex.new
+
+    assert_equal('B-Cb-c', alphareg.generate_regex_between('A', 'D'))
+  end
+
   def test_range_before
     alphareg = AlphabeticRegex.new
 
@@ -62,7 +107,9 @@ class TestAlphabeticRegex < Test::Unit::TestCase
     assert_equal('[_1-9A-Za-z]', alphareg.get_range_after('0'))
     assert_equal('[_9A-Za-z]', alphareg.get_range_after('8'))
     assert_equal('[_B-Zb-z]', alphareg.get_range_after('A'))
+    assert_equal('[_B-Zb-z]', alphareg.get_range_after('a'))
     assert_equal('[_]', alphareg.get_range_after('Z'))
+    assert_equal('[_]', alphareg.get_range_after('z'))
     assert_equal('[]', alphareg.get_range_after('_'))
   end
 
@@ -125,7 +172,9 @@ class TestAlphabeticRegex < Test::Unit::TestCase
     assert_equal('', alphareg.get_alpha_range_before('A'))
     assert_equal('', alphareg.get_alpha_range_before('a'))
     assert_equal('A-Ya-y', alphareg.get_alpha_range_before('Z'))
+    assert_equal('A-Ya-y', alphareg.get_alpha_range_before('z'))
     assert_equal('A-La-l', alphareg.get_alpha_range_before('M'))
+    assert_equal('A-La-l', alphareg.get_alpha_range_before('m'))
     assert_equal('Aa', alphareg.get_alpha_range_before('B'))
   end
 
@@ -140,7 +189,9 @@ class TestAlphabeticRegex < Test::Unit::TestCase
     assert_equal('', alphareg.get_alpha_range_after('Z'))
     assert_equal('', alphareg.get_alpha_range_after('z'))
     assert_equal('B-Zb-z', alphareg.get_alpha_range_after('A'))
+    assert_equal('B-Zb-z', alphareg.get_alpha_range_after('a'))
     assert_equal('N-Zn-z', alphareg.get_alpha_range_after('M'))
+    assert_equal('N-Zn-z', alphareg.get_alpha_range_after('m'))
     assert_equal('Zz', alphareg.get_alpha_range_after('Y'))
   end
 
