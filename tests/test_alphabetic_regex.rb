@@ -55,7 +55,6 @@ class TestAlphabeticRegex < Test::Unit::TestCase
   def test_generate_regex
     alphareg = AlphabeticRegex.new
 
-    puts alphareg.generate_regex('Apple', 'Banana')
     regex_test(alphareg.generate_regex('Hello', 'Sherlock'), 'Hi', true)
     regex_test(alphareg.generate_regex('A', 'Azure'), 'Art', true)
     regex_test(alphareg.generate_regex('A', 'Azure'), 'Bravo', false)
