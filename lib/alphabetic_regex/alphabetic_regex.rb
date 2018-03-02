@@ -64,16 +64,21 @@ class AlphabeticRegex
   end
 
   def generate_regex(from_string, to_string)
-    full_regex = '^'
+    full_regex = ''
     if (from_string)
-      full_regex += ( '(' + generate_regex_after(from_string) + ")#{FULL_REGEX_MATCH}$")
+      full_regex += ('^(' + generate_regex_after(from_string) + ")#{FULL_REGEX_MATCH}$")
     end
-    between_regex = generate_regex_between(from_string, to_string)
+    if (from_string && to_string)
+      between_regex = generate_regex_between(from_string, to_string)
+    end
     if (between_regex)
       full_regex += ('|^(' + between_regex + ")#{FULL_REGEX_MATCH}$")
     end
     if (to_string)
-      full_regex += ('|^(' + generate_regex_before(to_string) + ")#{FULL_REGEX_MATCH}$")
+      unless(full_regex.empty?)
+        full_regex += '|'
+      end
+      full_regex += ('^(' + generate_regex_before(to_string) + ")#{FULL_REGEX_MATCH}$")
     end
     full_regex
   end
@@ -92,13 +97,13 @@ class AlphabeticRegex
     end
   end
 
-  # Includes any _exact_ results matching `end_string`
+  # Includes any _exact_ results matching `start_string`
   def generate_regex_after(start_string)
     first_char_match = get_regex_character_match(start_string[0])
     if (start_string.length > 1)
       range_after_next = get_range_after(start_string[1])
       recursive_range = generate_regex_after(start_string[1..-1])
-      "[#{first_char_match}]([#{range_after_next}]|#{recursive_range})"
+      "[#{first_char_match}](#{range_after_next}|#{recursive_range})"
     else
       "[#{first_char_match}]"
     end
@@ -109,14 +114,19 @@ class AlphabeticRegex
     start_range_char = get_next_alpha_character(start_char)
     end_char = end_string[0]
     end_range_char = get_prev_alpha_character(end_char)
-
+    if (start_range_char == end_range_char)
+      return "[#{start_range_char.upcase}#{start_range_char.downcase}]"
+    end
     if (start_range_char < end_range_char)
-      return "#{start_range_char.upcase}-#{end_range_char.upcase}#{start_range_char.downcase}-#{end_range_char.downcase}"
+      return "[#{start_range_char.upcase}-#{end_range_char.upcase}#{start_range_char.downcase}-#{end_range_char.downcase}]"
     end
     return nil
   end
 
   def get_range_before(character)
+    if (character == FIRST_CHARACTER)
+      return ''
+    end
     special_range = get_special_before(character)
     numeric_range = get_numeric_range_before(character)
     alphabetic_range = get_alpha_range_before(character)
@@ -124,6 +134,9 @@ class AlphabeticRegex
   end
 
   def get_range_after(character)
+    if (character == LAST_CHARACTER)
+      return ''
+    end
     special_range = get_special_after(character)
     numeric_range = get_numeric_range_after(character)
     alphabetic_range = get_alpha_range_after(character)

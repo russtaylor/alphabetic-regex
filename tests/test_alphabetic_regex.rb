@@ -56,9 +56,14 @@ class TestAlphabeticRegex < Test::Unit::TestCase
     alphareg = AlphabeticRegex.new
 
     regex_test(alphareg.generate_regex('Hello', 'Sherlock'), 'Hi', true)
-    regex_test(alphareg.generate_regex('A', 'Azure'), 'Art', true)
-    regex_test(alphareg.generate_regex('A', 'Azure'), 'Bravo', false)
+    regex_test(alphareg.generate_regex('Ab', 'Cb'), 'Cat', true)
+    regex_test(alphareg.generate_regex(nil, 'At'), 'Art', true)
+    regex_test(alphareg.generate_regex(nil, 'At'), 'Azure', false)
+    regex_test(alphareg.generate_regex(nil, 'At'), 'Bravo', false)
     regex_test(alphareg.generate_regex('Hello', 'Sherlock'), 'Zebra', false)
+    regex_test(alphareg.generate_regex('Zebra', nil), 'Zippy', true)
+    regex_test(alphareg.generate_regex('Zebra', nil), 'Zargon', false)
+    regex_test(alphareg.generate_regex('Zebra', nil), 'Train', false)
   end
 
   def test_generate_regex_before
@@ -73,7 +78,7 @@ class TestAlphabeticRegex < Test::Unit::TestCase
   def test_generate_regex_after
     alphareg = AlphabeticRegex.new
 
-    assert_equal('[Hh]([[_J-Zj-z]]|[Ii])', alphareg.generate_regex_after('Hi'))
+    assert_equal('[Hh]([_J-Zj-z]|[Ii])', alphareg.generate_regex_after('Hi'))
     regex_test(alphareg.generate_regex_after('Hi'), 'Hi', true)
     regex_test(alphareg.generate_regex_after('Hi'), 'Highlight', true)
     regex_test(alphareg.generate_regex_after('Hi'), 'H', false)
@@ -82,12 +87,13 @@ class TestAlphabeticRegex < Test::Unit::TestCase
   def test_generate_regex_between()
     alphareg = AlphabeticRegex.new
 
-    assert_equal('B-Cb-c', alphareg.generate_regex_between('A', 'D'))
+    assert_equal('[B-Cb-c]', alphareg.generate_regex_between('A', 'D'))
   end
 
   def test_range_before
     alphareg = AlphabeticRegex.new
 
+    assert_equal('', alphareg.get_range_before(' '))
     assert_equal('[ \-\.0-9]', alphareg.get_range_before('A'))
     assert_equal('[ \-\.0-9]', alphareg.get_range_before('a'))
     assert_equal('[ \-\.]', alphareg.get_range_before('0'))
@@ -109,7 +115,7 @@ class TestAlphabeticRegex < Test::Unit::TestCase
     assert_equal('[_B-Zb-z]', alphareg.get_range_after('a'))
     assert_equal('[_]', alphareg.get_range_after('Z'))
     assert_equal('[_]', alphareg.get_range_after('z'))
-    assert_equal('[]', alphareg.get_range_after('_'))
+    assert_equal('', alphareg.get_range_after('_'))
   end
 
   def test_get_special_before
