@@ -102,8 +102,11 @@ class AlphabeticRegex
     first_char_match = get_regex_character_match(start_string[0])
     if (start_string.length > 1)
       range_after_next = get_range_after(start_string[1])
+      unless (range_after_next.empty?)
+        range_after_next += '|'
+      end
       recursive_range = generate_regex_after(start_string[1..-1])
-      "[#{first_char_match}](#{range_after_next}|#{recursive_range})"
+      "[#{first_char_match}](#{range_after_next}#{recursive_range})"
     else
       "[#{first_char_match}]"
     end

@@ -4,6 +4,11 @@ require 'alphabetic_regex/alphabetic_regex.rb'
 class TestAlphabeticRegex < Test::Unit::TestCase
 
   def regex_test(regex_expression, string, should_match)
+    if (should_match != /#{regex_expression}/.match?(string))
+      puts "Failed! Should match: #{should_match}"
+      puts "Regex: #{regex_expression}"
+      puts "String: #{string}"
+    end
     assert_equal(should_match, /#{regex_expression}/.match?(string))
   end
 
@@ -55,14 +60,26 @@ class TestAlphabeticRegex < Test::Unit::TestCase
   def test_generate_regex
     alphareg = AlphabeticRegex.new
 
-    regex_test(alphareg.generate_regex('Hello', 'Sherlock'), 'Hi', true)
     regex_test(alphareg.generate_regex('Ab', 'Cb'), 'Cat', true)
     regex_test(alphareg.generate_regex(nil, 'At'), 'Art', true)
     regex_test(alphareg.generate_regex(nil, 'At'), 'Azure', false)
     regex_test(alphareg.generate_regex(nil, 'At'), 'Bravo', false)
+    regex_test(alphareg.generate_regex('Hi_Bob', 'Go_Stacey'), 'Hi_Albert', false)
+    regex_test(alphareg.generate_regex('Hi_Bob', 'Go_Stacey'), 'Hi_Bill', false)
+    regex_test(alphareg.generate_regex('Hi_Bob', 'Go_Stacey'), 'Hi_Sara', true)
+    regex_test(alphareg.generate_regex('Hi_Bob', 'Go_Stacey'), 'Go_Suzy', false)
+    regex_test(alphareg.generate_regex('Hi_Bob', 'Go_Stacey'), 'Go_Zara', false)
+    # Issue! These are currently failing.
+    # regex_test(alphareg.generate_regex('Hi_Bob', 'Hi_Stacey'), 'Hi_Albert', false)
+    # regex_test(alphareg.generate_regex('Hi_Bob', 'Hi_Stacey'), 'Hi_Bill', false)
+    # regex_test(alphareg.generate_regex('Hi_Bob', 'Hi_Stacey'), 'Hi_Sara', true)
+    # regex_test(alphareg.generate_regex('Hi_Bob', 'Hi_Stacey'), 'Hi_Suzy', false)
+    # regex_test(alphareg.generate_regex('Hi_Bob', 'Hi_Stacey'), 'Hi_Zara', false)
+    regex_test(alphareg.generate_regex('Hello', 'Sherlock'), 'Apples', false)
+    regex_test(alphareg.generate_regex('Hello', 'Sherlock'), 'Hi', true)
     regex_test(alphareg.generate_regex('Hello', 'Sherlock'), 'Zebra', false)
-    regex_test(alphareg.generate_regex('Zebra', nil), 'Zippy', true)
     regex_test(alphareg.generate_regex('Zebra', nil), 'Zargon', false)
+    regex_test(alphareg.generate_regex('Zebra', nil), 'Zippy', true)
     regex_test(alphareg.generate_regex('Zebra', nil), 'Train', false)
   end
 
