@@ -64,9 +64,21 @@ class AlphabeticRegex
   end
 
   def generate_regex(from_string, to_string)
+    if (!from_string && !to_string)
+      raise "Whoa! `from_string` and `to_string` can't both be nil!"
+    end
     full_regex = ''
     if (from_string)
       full_regex += ('^(' + generate_regex_after(from_string) + ")#{FULL_REGEX_MATCH}$")
+    else
+      first_char = to_string[0].upcase
+      if (first_char != FIRST_ALPHA_CHARACTER)
+        if (first_char == get_next_alpha_character(FIRST_ALPHA_CHARACTER))
+          full_regex += "^[#{FIRST_ALPHA_CHARACTER}#{FIRST_ALPHA_CHARACTER.downcase}]"
+        else
+          full_regex += '^' + generate_regex_between(FIRST_ALPHA_CHARACTER, first_char)
+        end
+      end
     end
     if (from_string && to_string)
       between_regex = generate_regex_between(from_string, to_string)
@@ -79,6 +91,15 @@ class AlphabeticRegex
         full_regex += '|'
       end
       full_regex += ('^(' + generate_regex_before(to_string) + ")#{FULL_REGEX_MATCH}$")
+    else
+      first_char = from_string[0].upcase
+      if (first_char != LAST_ALPHA_CHARACTER)
+        if (first_char == get_prev_alpha_character(LAST_ALPHA_CHARACTER))
+          full_regex += '|' + "[#{LAST_ALPHA_CHARACTER}#{LAST_ALPHA_CHARACTER.downcase}]#{FULL_REGEX_MATCH}$"
+        else
+          full_regex += '|' + generate_regex_between(first_char, LAST_ALPHA_CHARACTER) + "#{FULL_REGEX_MATCH}$"
+        end
+      end
     end
     full_regex
   end
